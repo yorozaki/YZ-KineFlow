@@ -6,10 +6,6 @@
 
 **Author:** Yorozaki
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"></a>
-</p>
-
 ## Project Overview
 
 YZ KineFlow is a Web-based robotic motion control system designed for ESP32-driven multi-servo robotic arms. It provides an intuitive interface for manual control, real-time smoothing, motion recording, playback with resume, auto-loop functionality, and global motion speed control. The system is engineered to bridge interactive robotics and digital toolspaces, enabling users to choreograph, tune, and visualize kinematic behavior directly from the browser.
@@ -43,7 +39,7 @@ YZ KineFlow is a Web-based robotic motion control system designed for ESP32-driv
 1. Open the Arduino IDE and select your ESP32 board.
 2. Install required libraries (ESPAsyncWebServer, Adafruit PWM Servo Driver, ArduinoJson).
 3. Connect ESP32 via USB. Hold **BOOT** if needed during upload.
-4. Upload `Control_Panel_V2.ino`.
+4. Upload `Kine_Flow.ino`.
 5. Open Serial Monitor to confirm network/IP.
 
 ## License
