@@ -48,7 +48,25 @@ YZ KineFlow is a Web-based robotic motion control system designed for ESP32-driv
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"></a>
 </p>
 
-MIT License. Free for personal, academic, or commercial use.
+Copyright (c) 2025 Yorozaki
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## GitHub Deployment Preview
 
@@ -60,3 +78,21 @@ You may host the UI on GitHub Pages to demonstrate the interface layout, slider 
 - IP input fields.
 
 This provides an interactive mockup of the full system for documentation and presentation.
+
+## Screenshots
+
+### Intro Page
+
+![Intro Page](assets/screenshots/1_Intro_Page.png)
+
+### Loading Page
+
+![Loading Page](assets/screenshots/2_Loading_Page.png)
+
+### AG Page
+
+![AG Page](assets/screenshots/3_AG_Page.png)
+
+### Terminal Page
+
+![Terminal Page](assets/screenshots/4_Terminal_Page.png)
