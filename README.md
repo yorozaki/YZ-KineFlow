@@ -4,6 +4,10 @@
 
 # YZ KineFlow
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/yorozaki/YZ-KineFlow?style=flat" alt="Version Badge" />
+</p>
+
 **Author:** Yorozaki
 
 ## Project Overview
