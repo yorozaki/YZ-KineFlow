@@ -4,10 +4,6 @@
 
 # YZ KineFlow
 
-<p align="center">
-  <img src="https://img.shields.io/github/v/release/yorozaki/YZ-KineFlow?style=flat" alt="Version Badge" />
-</p>
-
 **Author:** Yorozaki
 
 ## Project Overview
@@ -102,5 +98,6 @@ This provides an interactive mockup of the full system for documentation and pre
 ![Terminal Page](assets/screenshots/4_Terminal_Page.png)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/YZ%20KineFlow-Robotics%20UI-00e5ff?style=flat&logo=webassembly&logoColor=white&labelColor=00e5ff&color=a7ff00" alt="YZ KineFlow Badge" />
+  <img src="https://img.shields.io/github/v/release/yorozaki/YZ-KineFlow?style=flat" alt="Version Badge" />
 </p>
+
