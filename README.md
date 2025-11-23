@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/yz-kineflow-logo.svg" alt="YZ KineFlow Logo" width="100%" />
+  <img src="assets/Yorozaki-Logo-TM.svg" alt="YZ KineFlow Logo" width="100%" />
 </p>
 
 # YZ KineFlow
@@ -64,4 +64,3 @@ You may host the UI on GitHub Pages to demonstrate the interface layout, slider 
 - IP input fields.
 
 This provides an interactive mockup of the full system for documentation and presentation.
-
