@@ -1,0 +1,1563 @@
+<!--
+  Author: Yorozaki
+  YZ KineFlow – WebUI
+  Copyright (c) 2025
+  Licensed under the MIT License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YZ01 · HUD System · Yorozaki</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent1:#00ffff;
+  --accent2:#7bff6a;
+  --bg:#0b0c0d;
+  --panel:#121416ee;
+  --stroke:#1e2227;
+  --txt:#e6f7ff;
+  --muted:#8aa2a8;
+  --accentGrad:linear-gradient(90deg,var(--accent1),var(--accent2));
+}
+
+/* ========== GLOBAL ========== */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#000;
+  color:#fff;
+  font-family:"Share Tech Mono",monospace;
+  overflow-y:auto;
+}
+
+/* ========== INTRO (PAGE 1) ========== */
+#intro{
+  position:fixed;inset:0;z-index:30;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform 1s ease,opacity 1s ease;
+}
+#intro.contract{transform:scale(0.9);opacity:0;}
+
+/* Corner brackets */
+.hud-bracket{position:fixed;width:28px;height:28px;opacity:.55;}
+.hud-bracket::before,.hud-bracket::after{
+  content:"";position:absolute;background:linear-gradient(90deg,var(--accent1),var(--accent2));
+}
+.hud-bracket.tl{top:calc(50% - 225px);left:calc(50% - 225px);}
+.hud-bracket.tr{top:calc(50% - 225px);right:calc(50% - 225px);transform:scaleX(-1);}
+.hud-bracket.bl{bottom:calc(50% - 225px);left:calc(50% - 225px);transform:scaleY(-1);}
+.hud-bracket.br{bottom:calc(50% - 225px);right:calc(50% - 225px);transform:scale(-1,-1);}
+.hud-bracket::before{width:28px;height:2px;left:0;top:0;}
+.hud-bracket::after{width:2px;height:28px;left:0;top:0;}
+@keyframes bracketPulse{0%,100%{opacity:.35;}50%{opacity:.65;}}
+.hud-bracket{animation:bracketPulse 6s ease-in-out infinite;}
+
+/* Rings */
+.rings{position:absolute;width:320px;height:320px;opacity:.25;}
+.ring{position:absolute;inset:0;margin:auto;border-radius:50%;border:1px solid #444;
+animation:ringBreath 5s ease-in-out infinite;}
+.ring.r2{width:260px;height:260px;border-color:#333;animation-delay:.6s;}
+@keyframes ringBreath{0%,100%{transform:scale(1);opacity:.25;}50%{transform:scale(1.03);opacity:.5;}}
+
+/* Grid */
+.grid{position:absolute;width:360px;height:360px;opacity:.2;}
+.grid::before,.grid::after{
+  content:"";position:absolute;left:50%;top:50%;background:#555;transform:translate(-50%,-50%);
+}
+.grid::before{width:100%;height:1px;}
+.grid::after{width:1px;height:100%;}
+
+/* Orbiting dots */
+.orbit{position:absolute;width:360px;height:360px;animation:spinCW 14s linear infinite;}
+.orbit.rev{animation-name:spinCCW;}
+@keyframes spinCW{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+@keyframes spinCCW{from{transform:rotate(0);}to{transform:rotate(-360deg);}}
+.dot{
+  position:absolute;top:50%;left:50%;
+  width:8px;height:8px;border-radius:50%;
+  transform:translate(-50%,-180px);
+  background:radial-gradient(circle at 30% 30%,var(--accent1),var(--accent2));
+  filter:blur(0.5px);
+  box-shadow:0 0 6px rgba(0,255,255,0.6),
+             0 0 12px rgba(123,255,106,0.35),
+             0 0 24px rgba(0,255,255,0.2);
+}
+
+/* Center X */
+.reticle{position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center;}
+.centerX{position:absolute;width:44px;height:44px;cursor:pointer;animation:xPulse 1.5s ease-in-out infinite;}
+.centerX::before,.centerX::after{
+  content:"";position:absolute;top:50%;left:50%;width:100%;height:2px;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  transform:translate(-50%,-50%)rotate(45deg);
+}
+.centerX::after{transform:translate(-50%,-50%)rotate(-45deg);}
+@keyframes xPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+
+/* Branding */
+.branding{
+  position:fixed;
+  bottom:8%;
+  left:50%;
+  transform:translateX(-50%);
+  text-align:center;
+  text-shadow:0 0 8px rgba(0,255,255,0.4);
+  line-height:1.3em;
+}
+.branding .yz01{
+  font-size:1.25rem;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:waveGrad 6s linear infinite;
+  background-size:200% 100%;
+}
+.branding .yorozaki{
+  font-size:0.95rem;
+  opacity:0.8;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:waveGrad 8s linear infinite;
+  background-size:200% 100%;
+}
+@keyframes waveGrad{from{background-position:200% 0;}to{background-position:-200% 0;}}
+
+/* ========== LOADING (PAGE 2) ========== */
+#loading{
+  position:fixed;inset:0;z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+#loading.active{opacity:1;pointer-events:auto;}
+.load-hud{position:absolute;width:380px;height:380px;opacity:.22;border:1px solid #2d2d2d;border-radius:50%;animation:spinCW 10s linear infinite;}
+.guide{position:absolute;width:60vw;max-width:520px;height:1px;background:#1a1a1a;opacity:.6;}
+.guide.top{top:42%;animation:guidePulse 4s ease-in-out infinite;}
+.guide.bot{top:58%;animation:guidePulse 4s ease-in-out infinite reverse;}
+@keyframes guidePulse{0%,100%{opacity:.35;}50%{opacity:.7;}}
+.loadText{color:#9aa;letter-spacing:.1em;margin-bottom:1.1rem;}
+.bar{position:relative;width:60vw;max-width:520px;height:10px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:5px;overflow:hidden;}
+.fill{position:relative;width:0%;height:100%;background:linear-gradient(90deg,var(--accent1),var(--accent2));transition:width 2s linear;}
+.fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.18) 50%,rgba(255,255,255,0) 100%);background-size:200% 100%;animation:wave 1.2s linear infinite;mix-blend-mode:screen;}
+@keyframes wave{from{background-position:200% 0;}to{background-position:-200% 0;}}
+.percent{margin-top:.55rem;color:#5af0e8;font-variant-numeric:tabular-nums;}
+
+/* ========== ACCESS GRANTED FLASH ========== */
+#granted{
+  position:fixed;inset:0;z-index:15;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent2);
+  letter-spacing:.12em;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.8s ease;
+}
+#granted.show{opacity:1;pointer-events:auto;}
+#granted.fadeout{opacity:0;pointer-events:none;}
+
+/* ========== HUD3 · MAIN CONTROL PAGE ========== */
+#hud3{
+  display:none;
+  height:100vh;
+  width:100vw;
+  background:var(--bg);
+  color:var(--txt);
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+
+/* Top Bar */
+.header{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:16px;
+  padding:10px 16px;
+  border-bottom:1px solid #1a2024;
+  background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.05));
+}
+.header .left, .header .right{
+  display:flex;align-items:center;gap:10px;
+}
+.label{color:var(--muted);font-size:.85rem;}
+.badge{
+  padding:4px 8px;border-radius:6px;
+  border:1px solid #203038;
+  font-size:.8rem;
+}
+.badge.online{border-color:#2f8f5a;color:#7bff6a}
+.badge.offline{border-color:#803b3b;color:#ff7b7b}
+.iconBtn, .btn, select{
+  border:1px solid #2a3238;
+  background:transparent;
+  color:var(--txt);
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:.85rem;
+  font-family:"Share Tech Mono",monospace;
+  transition:.2s;
+}
+.iconBtn:hover, .btn:hover, select:hover{
+  box-shadow:0 0 0 1px #2a3238,0 0 12px rgba(0,255,255,.25);
+}
+
+/* IP control inline editor */
+.ipControl{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:2px 6px;
+  border-radius:8px;
+  border:1px solid #2a3238;
+  background:#05080a;
+}
+#ipAddrLabel{
+  cursor:pointer;
+  font-size:.85rem;
+}
+#ipInput{
+  width:0;
+  border:none;
+  outline:none;
+  background:transparent;
+  color:var(--txt);
+  font-family:"Share Tech Mono",monospace;
+  font-size:.8rem;
+  padding-left:4px;
+  opacity:0;
+  transition:width .2s ease,opacity .2s ease;
+}
+.ipControl.editing #ipInput{
+  width:120px;
+  opacity:1;
+}
+
+/* Dropdown fix */
+select.servoPin, select.servoPin option {
+  color: var(--txt);
+  background: #0e1215;
+  border: 1px solid #2a3238;
+}
+select.servoPin option:hover {
+  background: rgba(0,255,255,0.15);
+}
+
+/* Layout */
+.mainHUD{
+  min-height:calc(100vh - 56px);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  padding:16px;
+}
+.col{
+  display:grid;
+  grid-template-rows:1fr 1fr;
+  gap:16px;
+  min-height:0;
+}
+
+/* Panel */
+.panel{
+  position:relative;
+  background:var(--panel);
+  border-radius:14px;
+  border:1px solid #1a2126;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,255,255,.06),
+    0 8px 24px rgba(0,0,0,.35);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:visible;
+}
+.panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  pointer-events:none;
+  background:
+    radial-gradient(600px 600px at -10% -10%,rgba(0,255,255,0.05),transparent 60%),
+    radial-gradient(600px 600px at 110% 110%,rgba(123,255,106,0.05),transparent 60%);
+  mix-blend-mode:screen;
+  opacity:0.45;
+}
+.panel h2{
+  font-size:1rem;
+  margin-bottom:6px;
+  background:var(--accentGrad);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.sub{color:var(--muted);font-size:.8rem;margin-bottom:8px;}
+hr.sep{border:none;border-top:1px dashed #223038;margin:8px 0;}
+
+/* ========== PANEL D (TOP-LEFT): STATUS & CONTROL ========== */
+.panelD-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:14px;
+  flex:1;
+  margin-top:6px;
+}
+.box{
+  border:1px solid #1a272d;
+  background:#0e1215aa;
+  border-radius:12px;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+/* merged transport tile spans 2 columns */
+.box-transport{
+  grid-column:1 / span 2;
+  align-items:stretch;
+}
+.transportGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+}
+
+/* Speed row under buttons */
+.speedRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:10px;
+  width:100%;
+}
+.speedLabel{
+  font-size:.8rem;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.speedSliderWrap{
+  flex:1;
+}
+#speedValue{
+  font-size:.8rem;
+  color:var(--accent1);
+  white-space:nowrap;
+}
+
+.gaugeCircle{
+  width:120px;height:120px;
+  border-radius:50%;
+  border:4px solid #152125;
+  position:relative;
+  display:flex;justify-content:center;align-items:center;
+}
+.gaugeCircle::before{
+  content:"";
+  position:absolute;inset:16px;
+  border-radius:50%;
+  border:4px solid transparent;
+  border-top-color:var(--accent1);
+  border-right-color:var(--accent2);
+  animation:spinGauge 6s linear infinite;
+}
+@keyframes spinGauge{
+  0%{transform:rotate(0);}
+  100%{transform:rotate(360deg);}
+}
+.gaugeLabel{font-size:.8rem;margin-top:6px;}
+.gaugeValue{font-size:1.1rem;}
+
+.wifiBox{align-items:flex-start;width:100%;}
+.wifiLabel,.uptimeLabel{font-size:.8rem;color:var(--muted);margin-top:6px;}
+.wifiVal{font-size:.9rem;color:var(--accent1);}
+.wifiBarTrack,.wideBarTrack{
+  width:100%;height:12px;
+  background:#0b0f11;
+  border-radius:10px;
+  border:1px solid #243238;
+  margin-top:4px;
+}
+.wifiBarFill,.wideBarFill{
+  height:100%;
+  border-radius:10px;
+  background:var(--accentGrad);
+  width:0%;
+  transition:width .4s ease;
+}
+
+.recBtn,.playBtn{
+  padding:14px 20px;
+  font-size:1rem;
+  border-radius:10px;
+  background:transparent;
+  border:1px solid;
+}
+.recBtn{border-color:#ff4444;color:#ff7777;}
+.playBtn{border-color:#00ffaa;color:#00ffaa;}
+.recBtn.rec-active{
+  box-shadow:0 0 14px rgba(255,80,80,.8);
+}
+.playBtn.play-active{
+  box-shadow:0 0 14px rgba(0,255,170,.8);
+}
+
+/* new PAUSE / STOP buttons */
+.pauseBtn,.stopBtn{
+  padding:14px 20px;
+  font-size:1rem;
+  border-radius:10px;
+  background:transparent;
+  border:1px solid;
+}
+.pauseBtn{border-color:#ffaa00;color:#ffdd88;}
+.stopBtn{border-color:#8888ff;color:#bbb9ff;}
+.pauseBtn.pause-active{
+  box-shadow:0 0 14px rgba(255,200,80,.8);
+}
+.stopBtn.stop-active{
+  box-shadow:0 0 14px rgba(160,160,255,.8);
+}
+
+.barsBox{width:100%;align-items:flex-start;}
+.barLabel{font-size:.8rem;color:var(--muted);}
+
+/* ========== PANEL A (BOTTOM-LEFT): SERVO CONTROLS ========== */
+.servoGrid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  overflow:visible;
+  padding-right:4px;
+}
+.servoRow{
+  display:grid;
+  grid-template-columns:1.5fr 1.5fr 3fr auto;
+  gap:8px;
+  align-items:center;
+  padding:8px;
+  border-radius:10px;
+  border:1px solid #1b2227;
+  background:rgba(0,0,0,.18);
+}
+.servoRow.offline{opacity:.45;filter:saturate(.5);}
+.tag{
+  font-size:.85rem;
+  display:flex;align-items:center;gap:6px;
+}
+.editBtn{
+  border-radius:50%;
+  padding:2px 6px;
+  font-size:.7rem;
+}
+select.servoPin{height:32px;}
+
+input[type=range]{
+  -webkit-appearance:none;
+  width:100%;
+  height:28px;
+  background:transparent;
+  cursor:pointer;
+  position:relative;
+}
+/* Rail (WebKit) */
+input[type=range]::-webkit-slider-runnable-track{
+  height:6px;
+  margin-top:11px;
+  background:linear-gradient(
+    90deg,
+    rgba(0,255,255,0.20),
+    rgba(123,255,106,0.25),
+    rgba(0,255,255,0.20)
+  );
+  background-size:200% 100%;
+  animation:railGlow 4s linear infinite;
+  border-radius:999px;
+}
+/* Rail (Firefox) */
+input[type=range]::-moz-range-track{
+  height:6px;
+  background:linear-gradient(
+    90deg,
+    rgba(0,255,255,0.20),
+    rgba(123,255,106,0.25),
+    rgba(0,255,255,0.20)
+  );
+  background-size:200% 100%;
+  animation:railGlow 4s linear infinite;
+  border-radius:999px;
+}
+/* Thumb (WebKit) */
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  margin-top:-6px;
+  background:var(--accent1);
+  border:2px solid rgba(0,255,255,0.85);
+  box-shadow:0 0 10px rgba(0,255,255,0.85),
+             0 0 18px rgba(0,255,255,0.55);
+}
+/* Thumb (Firefox) */
+input[type=range]::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--accent1);
+  border:2px solid rgba(0,255,255,0.85);
+  box-shadow:0 0 10px rgba(0,255,255,0.85),
+             0 0 18px rgba(0,255,255,0.55);
+}
+input[type=range]:active::-webkit-slider-thumb,
+input[type=range]:active::-moz-range-thumb{
+  box-shadow:0 0 14px rgba(0,255,255,1),
+             0 0 25px rgba(0,255,255,0.75);
+  transform:scale(1.12);
+}
+.btn.reset:hover{
+  background:var(--accentGrad);
+  color:#001015;
+}
+
+/* ========== PANEL B (TOP-RIGHT): GRIPPER WIDGET ========== */
+.gripperGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+  flex:1;
+  margin-top:8px;
+}
+.gripBox{
+  border:1px solid #1a272d;
+  background:#0e1215aa;
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+/* Open / Close buttons */
+.gripActionBtn{
+  padding:12px 18px;
+  font-size:.9rem;
+  border-radius:10px;
+  border:1px solid #2a3238;
+  background:transparent;
+  color:var(--txt);
+}
+#openBtn{
+  border-color:#00ffaa;
+  color:#00ffaa;
+}
+#closeBtn{
+  border-color:#ff4444;
+  color:#ff7777;
+}
+.gripActionBtn:hover{
+  box-shadow:0 0 10px rgba(0,255,255,0.4);
+}
+
+/* Image box */
+.gripImageFrame{
+  position:relative;
+  width:100%;
+  max-width:220px;
+  aspect-ratio:1/1;
+  border-radius:12px;
+  border:1px dashed #2a3238;
+  background:#020406;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#gripImage{
+  max-width:100%;
+  max-height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* Upload button */
+.uploadBtn{
+  padding:8px 14px;
+  font-size:.8rem;
+  border-radius:8px;
+  border:1px solid #2a3238;
+  background:transparent;
+  color:var(--muted);
+}
+.uploadBtn:hover{
+  box-shadow:0 0 10px rgba(0,255,255,0.4);
+  color:var(--accent1);
+}
+
+/* Gear overlay */
+.gearOverlay{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:52px;
+  height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.gearOverlay svg{
+  width:100%;height:100%;
+}
+#overlayGear path{
+  transform-origin:50% 50%;
+}
+
+/* ========== PANEL C (BOTTOM-RIGHT): BOARD MAPS ========== */
+.pinSectionTitle{
+  color:var(--accent1);
+  font-size:.85rem;
+  margin:4px 0;
+}
+.pinGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+  gap:8px;
+}
+.pin{
+  padding:6px 8px;
+  text-align:center;
+  border-radius:8px;
+  background:#0c1012;
+  border:1px solid #223038;
+  font-size:.75rem;
+}
+.pin.used{
+  background:rgba(0,255,255,.1);
+  border-color:#1a8088;
+  color:var(--accent1);
+  box-shadow:0 0 10px rgba(0,255,255,.22) inset;
+}
+.statGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.statBox{
+  border:1px solid #1b272d;
+  border-radius:10px;
+  background:#0e1215;
+  padding:10px;
+  font-size:.85rem;
+  min-height:70px;
+}
+
+/* Rename Modal */
+.modalOverlay{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.6);
+  align-items:center;justify-content:center;
+  z-index:50;
+}
+.modal{
+  width:280px;
+  background:radial-gradient(circle at top,var(--panel),#050607 120%);
+  border-radius:14px;
+  border:1px solid #1b2930;
+  box-shadow:0 0 22px rgba(0,255,255,.3);
+  padding:14px;
+}
+.modal h3{
+  font-size:.95rem;
+  margin-bottom:8px;
+  background:var(--accentGrad);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.modal label{
+  display:block;
+  font-size:.8rem;
+  color:var(--muted);
+  margin-top:6px;
+}
+.modal input{
+  width:100%;
+  margin-top:2px;
+  padding:5px 6px;
+  border-radius:6px;
+  border:1px solid #1f2a30;
+  background:#05080a;
+  color:var(--txt);
+  font-family:inherit;
+}
+.modalActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:10px;
+}
+
+/* Responsive */
+@media(max-width:1100px){
+  .mainHUD{grid-template-columns:1fr;}
+  .col{grid-template-rows:auto auto;}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== PAGE 1: INTRO ========== -->
+<section id="intro">
+  <div class="rings"><div class="ring"></div><div class="ring r2"></div></div>
+  <div class="grid"></div>
+  <div class="orbit"><div class="dot"></div></div>
+  <div class="orbit rev"><div class="dot"></div></div>
+  <div class="hud-bracket tl"></div>
+  <div class="hud-bracket tr"></div>
+  <div class="hud-bracket bl"></div>
+  <div class="hud-bracket br"></div>
+  <div class="reticle"><div class="centerX" id="centerX"></div></div>
+
+  <div class="branding">
+    <div class="yz01">YZ&nbsp;01</div>
+    <div class="yorozaki">by&nbsp;Yorozaki™</div>
+  </div>
+</section>
+
+<!-- ========== PAGE 2: LOADING ========== -->
+<section id="loading">
+  <div class="load-hud"></div>
+  <div class="guide top"></div>
+  <div class="guide bot"></div>
+  <div class="loadText">SYSTEM BOOT</div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="percent" id="pct">0%</div>
+</section>
+
+<section id="granted">ACCESS&nbsp;GRANTED</section>
+
+<!-- ========== PAGE 3: HUD3 MAIN ========== -->
+<div id="hud3">
+
+  <!-- Top Bar -->
+  <div class="header">
+    <div class="left">
+      <button class="iconBtn" id="modeBtn">☀/🌙</button>
+      <span class="label">Link</span>
+      <span id="connBadge" class="badge offline">OFFLINE</span>
+      <span class="label">Wi-Fi</span>
+      <span id="wifiBadge" class="badge">—</span>
+    </div>
+    <div class="label" style="text-align:center;">
+      ESP32 · <span id="boardId">WROOM-32</span> · IP
+      <span class="ipControl" id="ipControl">
+        <span id="ipAddrLabel">auto</span>
+        <input id="ipInput" type="text" autocomplete="off" />
+      </span>
+    </div>
+    <div class="right" style="justify-content:flex-end;">
+      <button class="iconBtn" id="shutdownBtn">⏻ Shutdown</button>
+    </div>
+  </div>
+
+  <div class="mainHUD">
+    <!-- LEFT COLUMN -->
+    <div class="col">
+
+      <!-- Panel D: Status & Control -->
+      <div class="panel" id="panelD">
+        <h2>Status & Control</h2>
+        <div class="panelD-grid">
+          <!-- Voltage -->
+          <div class="box">
+            <div class="gaugeCircle">
+              <div class="gaugeValue" id="vRead">--</div>
+            </div>
+            <div class="gaugeLabel">Voltage</div>
+          </div>
+          <!-- Temp -->
+          <div class="box">
+            <div class="gaugeCircle">
+              <div class="gaugeValue" id="tempRead">--</div>
+            </div>
+            <div class="gaugeLabel">Temp / Load</div>
+          </div>
+          <!-- WiFi + Uptime -->
+          <div class="box wifiBox">
+            <div class="wifiLabel">Wi-Fi Strength</div>
+            <div class="wifiBarTrack"><div class="wifiBarFill" id="wifiBar"></div></div>
+            <div id="wifiRead" class="wifiVal">--</div>
+            <div class="uptimeLabel">Uptime</div>
+            <div id="uptimeVal" class="wifiVal">--</div>
+          </div>
+
+          <!-- Transport Controls: REC / PLAY / PAUSE / STOP + SPEED -->
+          <div class="box box-transport">
+            <div class="transportGrid">
+              <button class="recBtn" id="recBtn">● REC</button>
+              <button class="playBtn" id="playBtn">▶ PLAY</button>
+              <button class="pauseBtn" id="pauseBtn">⏸ PAUSE</button>
+              <button class="stopBtn" id="stopBtn">⏹ STOP</button>
+            </div>
+            <div class="speedRow">
+              <span class="speedLabel">Speed</span>
+              <div class="speedSliderWrap">
+                <input id="speedSlider" type="range" min="25" max="200" step="5" />
+              </div>
+              <span id="speedValue">1.00x</span>
+            </div>
+          </div>
+
+          <!-- CPU + Memory -->
+          <div class="box barsBox">
+            <div class="barLabel">CPU Load</div>
+            <div class="wideBarTrack"><div class="wideBarFill" id="cpuBar"></div></div>
+            <div class="barLabel" style="margin-top:12px;">Memory Used</div>
+            <div class="wideBarTrack"><div class="wideBarFill" id="memBar"></div></div>
+          </div>
+        </div>
+        <p id="recState" class="sub" style="text-align:center;margin-top:6px;">Idle</p>
+      </div>
+
+      <!-- Panel A: Servo Controls -->
+      <div class="panel" id="panelA">
+        <h2>Servo Controls</h2>
+        <div class="sub">
+          Master controller → PCA9685 channels or ESP32 GPIO. Edit names & defaults per servo.
+        </div>
+        <div class="sub">
+          Controller:
+          <select id="controllerSelect" class="servoPin" style="margin-left:6px;">
+            <option value="pca">PCA9685 (16ch)</option>
+            <option value="esp">ESP32 GPIO</option>
+          </select>
+        </div>
+        <div id="servoGrid" class="servoGrid"></div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col">
+
+      <!-- Panel B: Gripper Widget -->
+      <div class="panel" id="panelB">
+        <h2>Gripper (MG90s · 360°)</h2>
+        <div class="sub">
+          Upload a live gripper snapshot. OPEN/CLOSE buttons drive the 360° servo via ESP32.
+        </div>
+
+        <div class="gripperGrid">
+          <!-- OPEN -->
+          <div class="gripBox">
+            <button class="gripActionBtn" id="openBtn">OPEN</button>
+          </div>
+
+          <!-- IMAGE -->
+          <div class="gripBox">
+            <div class="gripImageFrame">
+              <img id="gripImage" alt="Gripper preview" />
+              <div class="gearOverlay">
+                <svg viewBox="0 0 100 100">
+                  <g id="overlayGear">
+                    <path d="M50 25 L57 25 L60 35 L70 38 L70 45 L60 50 L60 60 L52 65 L48 65 L40 60 L40 50 L30 45 L30 38 L40 35 L43 25 Z"
+                      fill="none" stroke="#00ffff" stroke-width="2"/>
+                    <circle cx="50" cy="45" r="6" fill="none" stroke="#00ffff" stroke-width="2"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <button class="uploadBtn" id="gripUploadBtn">Upload PNG/JPG</button>
+            <input type="file" id="gripImageInput" accept="image/*" style="display:none">
+          </div>
+
+          <!-- CLOSE -->
+          <div class="gripBox">
+            <button class="gripActionBtn" id="closeBtn">CLOSE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel C: Board Maps -->
+      <div class="panel" id="panelC">
+        <h2>Board Maps</h2>
+        <div class="sub">PCA9685 channels, ESP32 GPIO pins, and usage overview.</div>
+
+        <div class="pinSectionTitle">PCA9685 Channels</div>
+        <div id="pcaGrid" class="pinGrid"></div>
+        <hr class="sep"/>
+
+        <div class="pinSectionTitle">ESP32 GPIO</div>
+        <div id="pinGrid" class="pinGrid"></div>
+        <hr class="sep"/>
+
+        <div class="statGrid">
+          <div class="statBox">
+            <div class="label">PCA Usage</div>
+            <div id="pcaUse">—</div>
+          </div>
+          <div class="statBox">
+            <div class="label">ESP Pins Used</div>
+            <div id="espUse">—</div>
+          </div>
+          <div class="statBox">
+            <div class="label">Servos Active</div>
+            <div id="devUse">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Rename Modal -->
+  <div class="modalOverlay" id="editOverlay">
+    <div class="modal">
+      <h3>Edit Servo</h3>
+      <label for="editName">Name</label>
+      <input id="editName" type="text" />
+      <label for="editDefault">Default Angle (0–180)</label>
+      <input id="editDefault" type="number" min="0" max="180" />
+      <div class="modalActions">
+        <button class="btn" id="editCancel">Cancel</button>
+        <button class="btn" id="editSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /hud3 -->
+
+/*
+  Author: Yorozaki
+  YZ KineFlow – WebUI Motion System
+  MIT License
+*/
+
+<script>
+/* ========= CONFIG ========= */
+const COMMON_PINS = [0,2,4,5,12,13,14,15,16,17,18,19,21,22,23,25,26,27,32,33];
+const EXTRA_ESP_PINS = ["SCL","SDA","3V3","GND"];
+const PCA_CHANNELS = Array.from({length:16}, (_,i)=>i);
+
+const DEFAULTS = {
+  SB:100, S1:100, S2:120, S3:115, S4:0, Sx:90,
+  cwPulse:1700, ccwPulse:1300
+};
+const SERVO_META_BASE = [
+  {id:"SB", baseLabel:"SB · Base"},
+  {id:"S1", baseLabel:"S1 · Shoulder"},
+  {id:"S2", baseLabel:"S2 · Elbow"},
+  {id:"S3", baseLabel:"S3 · Wrist"},
+  {id:"S4", baseLabel:"S4 · Wrist Rot"},
+  {id:"Sx", baseLabel:"Custom"}
+];
+
+/* ========= STATE ========= */
+let servoStates   = {};
+let assignmentsPCA = {};
+let assignmentsESP = {};
+let editingServoId = null;
+let isRecording = false;
+let isPlaying  = false;
+let uptimeSec  = 0;
+let speedFactor = 1.0;
+
+/* ========= INTRO / BOOT SEQUENCE ========= */
+const intro   = document.getElementById('intro');
+const centerX = document.getElementById('centerX');
+const loading = document.getElementById('loading');
+const fill    = document.getElementById('fill');
+const pct     = document.getElementById('pct');
+const granted = document.getElementById('granted');
+const hud3    = document.getElementById('hud3');
+
+function startBootSequence(){
+  document.body.style.overflow = "hidden";
+  hud3.style.display = "none";
+  loading.classList.remove("active");
+  granted.className = "";
+  pct.textContent = "0%";
+  fill.style.width = "0%";
+
+  intro.style.display = "flex";
+  void intro.offsetWidth;
+  intro.classList.remove("contract");
+}
+
+function goToHUD3(){
+  granted.classList.remove("show","fadeout");
+  granted.style.opacity = 0;
+  hud3.style.display = "block";
+  document.body.style.overflow = "auto";
+}
+
+centerX.addEventListener('click',()=>{
+  intro.classList.add('contract');
+  setTimeout(()=>{
+    intro.style.display = 'none';
+    loading.classList.add('active');
+    fill.style.width = '100%';
+    let p = 0;
+    const timer = setInterval(()=>{
+      p++;
+      pct.textContent = p + '%';
+      if(p>=100){
+        clearInterval(timer);
+        setTimeout(()=>{
+          loading.classList.remove('active');
+          granted.classList.add('show');
+          setTimeout(()=>{
+            granted.classList.add('fadeout');
+            setTimeout(goToHUD3,800);
+          },1500);
+        },200);
+      }
+    },20);
+  },1000);
+});
+
+/* ========= THEME ========= */
+const root = document.documentElement;
+const modeBtn = document.getElementById("modeBtn");
+modeBtn.addEventListener("click",()=>{
+  const cur = root.getAttribute("data-theme");
+  root.setAttribute("data-theme", cur==="light" ? "dark" : "light");
+});
+root.setAttribute("data-theme","dark");
+
+/* ========= TRANSPORT (ESP32 HOST + IP EDITOR) ========= */
+const connBadge = document.getElementById("connBadge");
+const wifiBadge = document.getElementById("wifiBadge");
+const ipControl = document.getElementById("ipControl");
+const ipAddrLabel = document.getElementById("ipAddrLabel");
+const ipInput = document.getElementById("ipInput");
+
+let host = localStorage.getItem("yz01_host") || "10.0.0.198";
+let ws;
+let wsReady = false;
+
+function applyHost(newHost){
+  const trimmed = (newHost || "").trim();
+  if(!trimmed) return;
+  host = trimmed;
+  ipAddrLabel.textContent = host;
+  localStorage.setItem("yz01_host", host);
+  if(ws){
+    try{ ws.close(); }catch(e){}
+  }
+  initWS();
+}
+
+// init label + input with saved host
+ipAddrLabel.textContent = host;
+ipInput.value = host;
+
+// click to start editing
+ipControl.addEventListener("click",()=>{
+  ipControl.classList.add("editing");
+  ipInput.value = host;
+  ipInput.focus();
+  ipInput.select();
+});
+
+// commit on Enter, cancel on Esc, commit on blur
+ipInput.addEventListener("keydown",e=>{
+  if(e.key === "Enter"){
+    applyHost(ipInput.value);
+    ipControl.classList.remove("editing");
+  }else if(e.key === "Escape"){
+    ipControl.classList.remove("editing");
+  }
+});
+ipInput.addEventListener("blur",()=>{
+  if(ipControl.classList.contains("editing")){
+    applyHost(ipInput.value);
+    ipControl.classList.remove("editing");
+  }
+});
+
+function initWS(){
+  try{
+    ws = new WebSocket(`ws://${host}/ws`);
+    ws.onopen = () => {
+      wsReady = true;
+      connBadge.textContent = "CONNECTED";
+      connBadge.classList.remove("offline");
+      connBadge.classList.add("online");
+      // send current speed when connection opens
+      send({type:"speed", value:speedFactor});
+    };
+    ws.onclose = () => {
+      wsReady = false;
+      connBadge.textContent = "OFFLINE";
+      connBadge.classList.remove("online");
+      connBadge.classList.add("offline");
+    };
+  }catch(e){
+    console.warn("WebSocket error:", e);
+  }
+}
+function send(msg){
+  const payload = JSON.stringify(msg);
+  if(wsReady){
+    ws.send(payload);
+  }else{
+    fetch(`http://${host}/api/command`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:payload
+    }).catch(()=>{});
+  }
+}
+
+/* ========= SERVO STATE HELPERS ========= */
+function loadServoState(id){
+  if(!servoStates[id]){
+    const saved = JSON.parse(localStorage.getItem("servo_"+id) || "null");
+    servoStates[id] = {
+      name: saved?.name || SERVO_META_BASE.find(m=>m.id===id).baseLabel,
+      def:  saved?.def ?? DEFAULTS[id],
+      controller: null,
+      pin: null,
+      value: DEFAULTS[id]
+    };
+  }
+  return servoStates[id];
+}
+function saveServoConfig(id){
+  const st = servoStates[id];
+  localStorage.setItem("servo_"+id, JSON.stringify({name:st.name,def:st.def}));
+}
+
+/* ========= PANEL A: SERVO CONTROLS ========= */
+const controllerSelect = document.getElementById("controllerSelect");
+const servoGrid        = document.getElementById("servoGrid");
+
+function buildServoRows(){
+  servoGrid.innerHTML = "";
+  const controller = controllerSelect.value;
+
+  SERVO_META_BASE.forEach(meta=>{
+    const st = loadServoState(meta.id);
+    const row = document.createElement("div");
+    row.className = "servoRow offline";
+    row.dataset.servo = meta.id;
+
+    let pinOptions = `<option>Offline</option>`;
+    if(controller==="pca"){
+      PCA_CHANNELS.forEach(ch=>{pinOptions += `<option>CH${ch}</option>`;});
+    }else{
+      COMMON_PINS.forEach(gpio=>{pinOptions += `<option>GPIO${gpio}</option>`;});
+    }
+
+    row.innerHTML = `
+      <div class="tag">
+        <span class="servoLabel">${st.name}</span>
+        <button class="iconBtn editBtn" title="Rename & default">✏</button>
+      </div>
+      <select class="servoPin">${pinOptions}</select>
+      <input class="servoRange" type="range" min="0" max="180" value="${st.value}">
+      <button class="btn reset">Reset</button>
+    `;
+
+    const sel      = row.querySelector(".servoPin");
+    const rng      = row.querySelector(".servoRange");
+    const editBtn  = row.querySelector(".editBtn");
+    const resetBtn = row.querySelector(".reset");
+
+    if(st.controller===controller && st.pin!=null){
+      if(controller==="pca") sel.value = "CH"+st.pin;
+      else                   sel.value = "GPIO"+st.pin;
+      row.classList.remove("offline");
+      rng.disabled=false;
+      rng.value=st.value;
+    }else{
+      sel.value="Offline";
+      row.classList.add("offline");
+      rng.disabled=true;
+    }
+
+    sel.addEventListener("change",()=>{
+      const val = sel.value;
+      const id  = meta.id;
+
+      Object.keys(assignmentsPCA).forEach(ch=>{
+        if(assignmentsPCA[ch]===id) delete assignmentsPCA[ch];
+      });
+      Object.keys(assignmentsESP).forEach(pin=>{
+        if(assignmentsESP[pin]===id) delete assignmentsESP[pin];
+      });
+
+      if(val==="Offline"){
+        st.controller=null;st.pin=null;
+        rng.disabled=true;
+        row.classList.add("offline");
+      }else{
+        if(controller==="pca"){
+          const ch = parseInt(val.replace("CH",""));
+          if(assignmentsPCA[ch] && assignmentsPCA[ch]!==id){
+            alert(`CH${ch} already used by ${assignmentsPCA[ch]}`);
+            sel.value="Offline";
+            st.controller=null;st.pin=null;
+            rng.disabled=true;
+            row.classList.add("offline");
+          }else{
+            assignmentsPCA[ch]=id;
+            st.controller="pca";
+            st.pin=ch;
+            rng.disabled=false;
+            row.classList.remove("offline");
+          }
+        }else{
+          const gpio = parseInt(val.replace("GPIO",""));
+          if(assignmentsESP[gpio] && assignmentsESP[gpio]!==id){
+            alert(`GPIO${gpio} already used by ${assignmentsESP[gpio]}`);
+            sel.value="Offline";
+            st.controller=null;st.pin=null;
+            rng.disabled=true;
+            row.classList.add("offline");
+          }else{
+            assignmentsESP[gpio]=id;
+            st.controller="esp";
+            st.pin=gpio;
+            rng.disabled=false;
+            row.classList.remove("offline");
+          }
+        }
+      }
+      servoStates[id]=st;
+      refreshMaps();
+    });
+
+    rng.addEventListener("input",()=>{
+      st.value = Number(rng.value);
+      servoStates[meta.id]=st;
+      maybeSendServo(meta.id);
+    });
+
+    resetBtn.addEventListener("click",()=>{
+      rng.value = st.def;
+      st.value  = st.def;
+      servoStates[meta.id]=st;
+      maybeSendServo(meta.id);
+    });
+
+    editBtn.addEventListener("click",()=>openEditModal(meta.id));
+
+    servoGrid.appendChild(row);
+  });
+}
+
+controllerSelect.addEventListener("change",()=>{
+  assignmentsPCA={};assignmentsESP={};
+  Object.values(servoStates).forEach(st=>{st.controller=null;st.pin=null;});
+  buildServoRows();
+  refreshMaps();
+});
+buildServoRows();
+
+/* ========= PANEL C: BOARD MAPS ========= */
+const pcaGrid = document.getElementById("pcaGrid");
+const pinGrid = document.getElementById("pinGrid");
+const pcaUse  = document.getElementById("pcaUse");
+const espUse  = document.getElementById("espUse");
+const devUse  = document.getElementById("devUse");
+
+function refreshPCAGrid(){
+  pcaGrid.innerHTML="";
+  PCA_CHANNELS.forEach(ch=>{
+    const usedServo = assignmentsPCA[ch];
+    const div = document.createElement("div");
+    div.className="pin "+(usedServo?"used":"free");
+    div.textContent = usedServo ? `CH${ch} · ${usedServo}` : `CH${ch}`;
+    pcaGrid.appendChild(div);
+  });
+}
+function refreshESPGrid(){
+  pinGrid.innerHTML="";
+  COMMON_PINS.forEach(gpio=>{
+    const usedServo = assignmentsESP[gpio];
+    const div = document.createElement("div");
+    div.className="pin "+(usedServo?"used":"free");
+    div.textContent = usedServo ? `GPIO${gpio} · ${usedServo}` : `GPIO${gpio}`;
+    pinGrid.appendChild(div);
+  });
+  EXTRA_ESP_PINS.forEach(label=>{
+    const div = document.createElement("div");
+    div.className="pin used";
+    div.textContent = label+" · SYS";
+    pinGrid.appendChild(div);
+  });
+}
+function refreshStats(){
+  const pUsed = Object.keys(assignmentsPCA).length;
+  const eUsed = Object.keys(assignmentsESP).length;
+  const activeServos = new Set([
+    ...Object.values(assignmentsPCA),
+    ...Object.values(assignmentsESP)
+  ].filter(Boolean)).size;
+  pcaUse.textContent = `${pUsed}/16`;
+  espUse.textContent = `${eUsed}/${COMMON_PINS.length}`;
+  devUse.textContent = `${activeServos}`;
+}
+function refreshMaps(){
+  refreshPCAGrid();
+  refreshESPGrid();
+  refreshStats();
+}
+refreshMaps();
+
+/* ========= PANEL B: GRIPPER WIDGET ========= */
+const openBtn      = document.getElementById("openBtn");
+const closeBtn     = document.getElementById("closeBtn");
+const gripImage    = document.getElementById("gripImage");
+const gripImageInput = document.getElementById("gripImageInput");
+const gripUploadBtn = document.getElementById("gripUploadBtn");
+const overlayGear  = document.getElementById("overlayGear");
+
+openBtn.addEventListener("click",()=>{
+  send({type:"gripper", dir:"open", pulse:DEFAULTS.cwPulse});
+  overlayGear.style.transition="transform 0.4s ease-out";
+  overlayGear.style.transform="rotate(90deg)";
+  setTimeout(()=>overlayGear.style.transform="rotate(0deg)",400);
+});
+closeBtn.addEventListener("click",()=>{
+  send({type:"gripper", dir:"close", pulse:DEFAULTS.ccwPulse});
+  overlayGear.style.transition="transform 0.4s ease-out";
+  overlayGear.style.transform="rotate(-90deg)";
+  setTimeout(()=>overlayGear.style.transform="rotate(0deg)",400);
+});
+gripUploadBtn.addEventListener("click",()=>{
+  gripImageInput.click();
+});
+gripImageInput.addEventListener("change",e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  gripImage.src = url;
+});
+
+/* ========= PANEL D: TELEMETRY ========= */
+const vRead     = document.getElementById("vRead");
+const tempRead  = document.getElementById("tempRead");
+const wifiRead  = document.getElementById("wifiRead");
+const wifiBar   = document.getElementById("wifiBar");
+const uptimeVal = document.getElementById("uptimeVal");
+const cpuBar    = document.getElementById("cpuBar");
+const memBar    = document.getElementById("memBar");
+
+setInterval(()=>{
+  uptimeSec++;
+  const v    = 6.0 + Math.sin(uptimeSec/18)*0.18;
+  const wifi = 70  + Math.sin(uptimeSec/22)*20;
+  const temp = 40  + Math.sin(uptimeSec/25)*6;
+  const cpu  = 30  + (Math.sin(uptimeSec/15)+1)*25;
+  const mem  = 20  + (Math.cos(uptimeSec/19)+1)*25;
+
+  vRead.textContent    = v.toFixed(2) + "V";
+  tempRead.textContent = Math.round(temp) + "°C";
+
+  const wifiClamped = Math.max(0,Math.min(100,wifi));
+  wifiRead.textContent  = Math.round(wifiClamped) + "%";
+  wifiBar.style.width   = wifiClamped + "%";
+  wifiBadge.textContent = Math.round(wifiClamped) + "%";
+
+  const h = Math.floor(uptimeSec/3600);
+  const m = Math.floor((uptimeSec%3600)/60);
+  const s = uptimeSec%60;
+  uptimeVal.textContent =
+    String(h).padStart(2,"0")+":"+
+    String(m).padStart(2,"0")+":"+
+    String(s).padStart(2,"0");
+
+  const cpuClamp = Math.max(0,Math.min(100,cpu));
+  const memClamp = Math.max(0,Math.min(100,mem));
+  cpuBar.style.width = cpuClamp + "%";
+  memBar.style.width = memClamp + "%";
+},1000);
+
+/* ========= RECORD / PLAY / PAUSE / STOP ========= */
+const recBtn   = document.getElementById("recBtn");
+const playBtn  = document.getElementById("playBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const stopBtn  = document.getElementById("stopBtn");
+const recState = document.getElementById("recState");
+
+function resetTransportState(){
+  isRecording = false;
+  isPlaying   = false;
+  recBtn.classList.remove("rec-active");
+  playBtn.classList.remove("play-active");
+  pauseBtn.classList.remove("pause-active");
+  stopBtn.classList.remove("stop-active");
+}
+
+function sendStopRecordAndPlayback(){
+  send({type:"record",   state:"stop"});
+  send({type:"playback", state:"stop"});
+}
+
+// REC toggles record on/off
+recBtn.addEventListener("click",()=>{
+  const next = !isRecording;
+  if(next){
+    resetTransportState();
+    isRecording = true;
+    recBtn.classList.add("rec-active");
+    recState.textContent = "Recording…";
+    send({type:"record", state:"start"});
+  }else{
+    isRecording = false;
+    recBtn.classList.remove("rec-active");
+    recState.textContent = "Idle";
+    send({type:"record", state:"stop"});
+  }
+});
+
+// PLAY toggles playback on/off (but Arduino treats stop as pause/resume)
+playBtn.addEventListener("click",()=>{
+  const next = !isPlaying;
+  if(next){
+    isPlaying = true;
+    playBtn.classList.add("play-active");
+    recState.textContent = "Playback…";
+    send({type:"playback", state:"start"});
+  }else{
+    isPlaying = false;
+    playBtn.classList.remove("play-active");
+    recState.textContent = "Paused (play toggle)";
+    send({type:"playback", state:"stop"});
+  }
+});
+
+// PAUSE → hard stop (no homing), resume with PLAY
+pauseBtn.addEventListener("click",()=>{
+  sendStopRecordAndPlayback();
+  isPlaying = false;
+  isRecording = false;
+  pauseBtn.classList.add("pause-active");
+  recState.textContent = "Paused (hard stop)";
+  setTimeout(()=>pauseBtn.classList.remove("pause-active"),350);
+});
+
+// STOP → hard stop + move all servos to their (editable) defaults
+stopBtn.addEventListener("click",()=>{
+  sendStopRecordAndPlayback();
+
+  const targets = SERVO_META_BASE.map(meta=>{
+    const st = loadServoState(meta.id);
+    return {
+      id: meta.id,
+      angle: st.def,
+      controller: st.controller,
+      pin: st.pin
+    };
+  }).filter(t => t.controller && t.pin != null);
+
+  if(targets.length){
+    send({type:"homeAll", targets});
+  }
+
+  resetTransportState();
+  stopBtn.classList.add("stop-active");
+  recState.textContent = "Homing to defaults…";
+  setTimeout(()=>{
+    stopBtn.classList.remove("stop-active");
+    recState.textContent = "Idle";
+  },1200);
+});
+
+/* ========= SPEED SLIDER (GLOBAL) ========= */
+const speedSlider = document.getElementById("speedSlider");
+const speedValueLabel = document.getElementById("speedValue");
+
+function applySpeedFromSlider(raw){
+  let v = parseInt(raw,10);
+  if(isNaN(v)) v = 100;
+  if(v < 25) v = 25;
+  if(v > 200) v = 200;
+  speedFactor = v / 100.0;
+  if(speedFactor < 0.25) speedFactor = 0.25;
+  if(speedFactor > 2.0)   speedFactor = 2.0;
+
+  if(speedValueLabel){
+    speedValueLabel.textContent = speedFactor.toFixed(2) + "x";
+  }
+  localStorage.setItem("yz01_speed", speedFactor.toString());
+  send({type:"speed", value:speedFactor});
+}
+
+if(speedSlider){
+  const saved = parseFloat(localStorage.getItem("yz01_speed") || "1");
+  let initial = Math.round(saved * 100);
+  if(initial < 25) initial = 100;
+  if(initial > 200) initial = 200;
+  speedSlider.value = initial;
+  applySpeedFromSlider(initial);
+
+  speedSlider.addEventListener("input", e=>{
+    applySpeedFromSlider(e.target.value);
+  });
+}
+
+/* ========= RENAME MODAL ========= */
+const editOverlay = document.getElementById("editOverlay");
+const editName    = document.getElementById("editName");
+const editDefault = document.getElementById("editDefault");
+const editCancel  = document.getElementById("editCancel");
+const editSave    = document.getElementById("editSave");
+
+function openEditModal(id){
+  editingServoId = id;
+  const st = loadServoState(id);
+  editName.value    = st.name;
+  editDefault.value = st.def;
+  editOverlay.style.display="flex";
+}
+function closeEditModal(){
+  editOverlay.style.display="none";
+  editingServoId=null;
+}
+editCancel.addEventListener("click",closeEditModal);
+editOverlay.addEventListener("click",e=>{
+  if(e.target===editOverlay) closeEditModal();
+});
+editSave.addEventListener("click",()=>{
+  if(!editingServoId) return;
+  const st = loadServoState(editingServoId);
+  const newName = editName.value.trim();
+  if(newName) st.name = newName;
+  let d = parseInt(editDefault.value);
+  if(isNaN(d) || d<0 || d>180) d = st.def;
+  st.def   = d;
+  st.value = d;
+  servoStates[editingServoId]=st;
+  saveServoConfig(editingServoId);
+  buildServoRows();
+  refreshMaps();
+  closeEditModal();
+});
+
+/* ========= SERVO COMMAND ========= */
+function maybeSendServo(id){
+  const st = servoStates[id];
+  if(!st || st.pin==null || !st.controller) return;
+  send({type:"servo",id,controller:st.controller,pin:st.pin,angle:st.value});
+}
+
+/* ========= SHUTDOWN → FULL RELOAD ========= */
+document.getElementById("shutdownBtn").addEventListener("click",()=>{
+  location.reload();
+});
+
+/* ========= INIT ========= */
+startBootSequence();
+initWS();
+</script>
+</body>
+</html>
