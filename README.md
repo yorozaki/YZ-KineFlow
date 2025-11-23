@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/Yorozaki-Logo-TM.svg" alt="YZ KineFlow Logo" width="100%" />
+  <img src="assets/Yorozaki-Logo-TM.svg" alt="YZ KineFlow Logo" width="50%" />
 </p>
 
 # YZ KineFlow
